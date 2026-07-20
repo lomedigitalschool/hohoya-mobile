@@ -11,5 +11,4 @@ class AppColors {
   static const textSecondary = Color(0xFF6B7C77);
   static const border = Color(0xFFE1E8E5);
   static const error = Color(0xFFD64545);
-  static const error1 = Color.fromARGB(255, 75, 14, 14);
 }
