@@ -3,9 +3,16 @@ import '../widgets/featured_card.dart';
 import '../widgets/trending_filters.dart';
 import '../widgets/property_card.dart';
 import '../widgets/bottom_nav_bar.dart';
+import 'public_profile_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
+
+  void _openOwnerProfile(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const PublicProfileScreen(userId: '2')),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,19 +36,20 @@ class HomeScreen extends StatelessWidget {
       ),
       body: SafeArea(
         child: ListView(
-          children: const [
+          children: [
             FeaturedCard(
               title: 'Metro City Studio',
               address: '482 Ocean Dr, San Diego',
               price: '\$2,500/m',
               rating: '5.0 | 140 reviews',
               imageUrl: 'https://picsum.photos/400/220',
+              onTap: () => _openOwnerProfile(context),
             ),
-            TrendingFilters(
+            const TrendingFilters(
               filters: ['All', 'House', 'Apartment', 'Villa'],
               selectedFilter: 'All',
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             PropertyCard(
               title: 'Aqua Horizon Estate',
               address: '482 Ocean Dr, San Diego',
@@ -49,8 +57,9 @@ class HomeScreen extends StatelessWidget {
               beds: 3,
               baths: 2,
               sqft: 1400,
+              onTap: () => _openOwnerProfile(context),
             ),
-            SizedBox(height: 80),
+            const SizedBox(height: 80),
           ],
         ),
       ),

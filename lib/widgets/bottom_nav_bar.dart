@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../screens/profile_screen.dart';
+
 class AppBottomNavBar extends StatelessWidget {
   const AppBottomNavBar({super.key});
 
@@ -17,7 +19,14 @@ class AppBottomNavBar extends StatelessWidget {
             IconButton(icon: const Icon(Icons.explore_outlined), onPressed: () {}),
             const SizedBox(width: 40),
             IconButton(icon: const Icon(Icons.calendar_today_outlined), onPressed: () {}),
-            IconButton(icon: const Icon(Icons.person_outline), onPressed: () {}),
+            IconButton(
+              icon: const Icon(Icons.person_outline),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                );
+              },
+            ),
           ],
         ),
       ),
