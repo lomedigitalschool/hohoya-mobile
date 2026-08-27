@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
+import '../services/auth_service.dart';
 import '../widgets/auth_text_field.dart';
 import '../widgets/primary_button.dart';
 import '../widgets/social_button.dart';
@@ -18,6 +19,22 @@ class _LoginScreenState extends State<LoginScreen> {
   final _identifierController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _isGoogleLoading = false;
+
+  Future<void> _handleGoogleLogin() async {
+    setState(() => _isGoogleLoading = true);
+    try {
+      await AuthService().signInWithGoogle();
+      if (!mounted) return;
+      Navigator.of(context).pushReplacementNamed('/home');
+    } on GoogleAuthException catch (error) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Google n’est pas configuré sur cet appareil.')));
+    } finally {
+      if (mounted) setState(() => _isGoogleLoading = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -119,7 +136,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Row(
                       children: [
                         Expanded(
-                          child: SocialButton(label: 'Google', provider: SocialProvider.google, onPressed: () {}),
+                          child: SocialButton(label: _isGoogleLoading ? 'Connexion...' : 'Google', provider: SocialProvider.google, onPressed: _isGoogleLoading ? () {} : _handleGoogleLogin),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -130,7 +147,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 16),
                     Center(
                       child: TextButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.of(context).pushReplacementNamed('/home');
+                        },
                         child: const Text("Continuer en tant qu'invité"),
                       ),
                     ),

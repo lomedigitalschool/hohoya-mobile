@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'screens/home_screen.dart';
+import 'screens/login_screen.dart';
+import 'screens/register_screen.dart';
+import 'screens/owner_properties_screen.dart';
+import 'screens/profile_screen.dart';
 import 'onboarding_screen.dart';
-
-import 'onboarding_screen.dart';
-import 'theme/app_theme.dart';
 
 void main() {
   runApp(const HohayaApp());
@@ -16,9 +18,6 @@ class HohayaApp extends StatelessWidget {
     return MaterialApp(
       title: 'Hohaya',
       debugShowCheckedModeBanner: false,
-<<<<<<< HEAD
-      theme: AppTheme.light,
-=======
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
@@ -26,8 +25,16 @@ class HohayaApp extends StatelessWidget {
           brightness: Brightness.light,
         ),
       ),
->>>>>>> 5d952171a042169ccba98fcd036f4b286b9a7568
-      home: const OnboardingScreen(),
+      // L'application commence par l'onboarding
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const OnboardingScreen(),
+        '/login': (context) => const LoginScreen(),
+        '/register': (context) => const RegisterScreen(),
+        '/home': (context) => const HomeScreen(),
+        '/owner-properties': (context) => const OwnerPropertiesScreen(),
+        '/profile': (context) => const ProfileScreen(),
+      },
     );
   }
 }

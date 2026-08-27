@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
+import '../services/auth_service.dart';
 import '../widgets/auth_text_field.dart';
 import '../widgets/primary_button.dart';
 import '../widgets/social_button.dart';
@@ -25,6 +26,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
   UserRole _role = UserRole.locataire;
   bool _acceptedTerms = false;
   bool _isLoading = false;
+  bool _isGoogleLoading = false;
+
+  Future<void> _handleGoogleRegister() async {
+    setState(() => _isGoogleLoading = true);
+    try {
+      await AuthService().signInWithGoogle();
+      if (!mounted) return;
+      Navigator.of(context).pushReplacementNamed('/home');
+    } on GoogleAuthException catch (error) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Google n’est pas configuré sur cet appareil.')));
+    } finally {
+      if (mounted) setState(() => _isGoogleLoading = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -214,7 +231,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 20),
               Row(
                 children: [
-                  Expanded(child: SocialButton(label: 'Google', provider: SocialProvider.google, onPressed: () {})),
+                  Expanded(child: SocialButton(label: _isGoogleLoading ? 'Inscription...' : 'Google', provider: SocialProvider.google, onPressed: _isGoogleLoading ? () {} : _handleGoogleRegister)),
                   const SizedBox(width: 12),
                   Expanded(child: SocialButton(label: 'Apple', provider: SocialProvider.apple, onPressed: () {})),
                 ],
