@@ -24,10 +24,10 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _handleGoogleLogin() async {
     setState(() => _isGoogleLoading = true);
     try {
-      await AuthService().signInWithGoogle();
+      await AuthService.instance.signInWithGoogle();
       if (!mounted) return;
       Navigator.of(context).pushReplacementNamed('/home');
-    } on GoogleAuthException catch (error) {
+    } on AuthException catch (error) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
     } catch (_) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Google n’est pas configuré sur cet appareil.')));
@@ -61,7 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       body: SingleChildScrollView(
         child: Column(
-          crossAxisAlignment: .stretch,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const _HeroHeader(),
             Padding(
@@ -69,11 +69,11 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Form(
                 key: _formKey,
                 child: Column(
-                  crossAxisAlignment: .start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
                       'Content de vous revoir',
-                      style: TextStyle(fontSize: 24, fontWeight: .w700, color: AppColors.textPrimary),
+                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
                     ),
                     const SizedBox(height: 6),
                     const Text(
@@ -155,7 +155,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 12),
                     Row(
-                      mainAxisAlignment: .center,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Text('Pas encore de compte ?', style: TextStyle(color: AppColors.textSecondary)),
                         TextButton(
@@ -198,7 +198,7 @@ class _HeroHeader extends StatelessWidget {
         ),
       ),
       child: Column(
-        crossAxisAlignment: .start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
@@ -213,14 +213,14 @@ class _HeroHeader extends StatelessWidget {
               const SizedBox(width: 12),
               const Text(
                 'Hohaya',
-                style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: .w600),
+                style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w600),
               ),
             ],
           ),
           const SizedBox(height: 28),
           const Text(
             'Trouvez votre\nprochain chez-vous',
-            style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: .w700, height: 1.2),
+            style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w700, height: 1.2),
           ),
           const SizedBox(height: 10),
           Text(

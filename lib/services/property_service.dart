@@ -1,5 +1,6 @@
 import '../models/property.dart';
 import '../models/user_profile.dart';
+import '../screens/register_screen.dart' show UserRole;
 
 class PropertyService {
   static const pageSize = 4;
@@ -201,6 +202,6 @@ class PropertyService {
   Future<UserProfile> fetchUser(String userId) async {
     await Future<void>.delayed(const Duration(milliseconds: 350));
     final properties = _properties.where((property) => property.ownerId == userId && property.status != 'archivé').toList();
-    return UserProfile(id: userId, name: 'Agence Hohaya', role: 'owner', properties: properties);
+    return UserProfile(id: userId, name: 'Agence Hohaya', role: UserRole.proprietaire, properties: properties);
   }
 }

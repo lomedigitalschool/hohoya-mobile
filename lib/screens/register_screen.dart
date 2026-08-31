@@ -31,10 +31,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _handleGoogleRegister() async {
     setState(() => _isGoogleLoading = true);
     try {
-      await AuthService().signInWithGoogle();
+      await AuthService.instance.signInWithGoogle();
       if (!mounted) return;
       Navigator.of(context).pushReplacementNamed('/home');
-    } on GoogleAuthException catch (error) {
+    } on AuthException catch (error) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
     } catch (_) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Google n’est pas configuré sur cet appareil.')));
@@ -85,11 +85,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
         child: Form(
           key: _formKey,
           child: Column(
-            crossAxisAlignment: .start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
                 'Rejoignez Hohaya',
-                style: TextStyle(fontSize: 24, fontWeight: .w700, color: AppColors.textPrimary),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
               ),
               const SizedBox(height: 6),
               const Text(
@@ -180,7 +180,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               const SizedBox(height: 16),
               Row(
-                crossAxisAlignment: .start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Checkbox(
                     value: _acceptedTerms,
@@ -197,12 +197,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           children: [
                             TextSpan(
                               text: "conditions d'utilisation",
-                              style: TextStyle(color: AppColors.primary, fontWeight: .w600),
+                              style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600),
                             ),
                             const TextSpan(text: ' et la '),
                             TextSpan(
                               text: 'politique de confidentialité',
-                              style: TextStyle(color: AppColors.primary, fontWeight: .w600),
+                              style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600),
                             ),
                           ],
                         ),
@@ -238,7 +238,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               const SizedBox(height: 20),
               Row(
-                mainAxisAlignment: .center,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Text('Déjà un compte ?', style: TextStyle(color: AppColors.textSecondary)),
                   TextButton(
@@ -284,11 +284,11 @@ class _RoleCard extends StatelessWidget {
           border: Border.all(color: selected ? AppColors.primary : AppColors.border, width: selected ? 1.5 : 1),
         ),
         child: Column(
-          crossAxisAlignment: .start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Icon(icon, color: selected ? AppColors.primary : AppColors.textSecondary),
             const SizedBox(height: 10),
-            Text(label, style: TextStyle(fontWeight: .w600, color: selected ? AppColors.primary : AppColors.textPrimary)),
+            Text(label, style: TextStyle(fontWeight: FontWeight.w600, color: selected ? AppColors.primary : AppColors.textPrimary)),
             const SizedBox(height: 2),
             Text(description, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
           ],
