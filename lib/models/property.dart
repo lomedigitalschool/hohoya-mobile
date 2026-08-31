@@ -3,10 +3,13 @@ class Property {
   String title;
   String city;
   String neighborhood;
-  String type; // ex: 'House', 'Apartment', 'Villa'
+  String type;
   double price;
   final String imageUrl;
   final String ownerId;
+  final String ownerName;
+  final double? ownerRating;
+  final int reviewCount;
   String description;
   int bedrooms;
   int bathrooms;
@@ -27,6 +30,9 @@ class Property {
     required this.price,
     required this.imageUrl,
     this.ownerId = 'owner-1',
+    this.ownerName = 'Propriétaire',
+    this.ownerRating,
+    this.reviewCount = 0,
     this.description = '',
     this.bedrooms = 0,
     this.bathrooms = 0,
@@ -49,6 +55,9 @@ class Property {
       price: (json['price'] as num).toDouble(),
       imageUrl: json['imageUrl'] ?? '',
       ownerId: json['ownerId']?.toString() ?? 'owner-1',
+      ownerName: json['ownerName'] ?? json['owner']?['name'] ?? 'Propriétaire',
+      ownerRating: (json['ownerRating'] as num?)?.toDouble(),
+      reviewCount: (json['reviewCount'] as num?)?.toInt() ?? 0,
       description: json['description'] ?? '',
       bedrooms: (json['bedrooms'] as num?)?.toInt() ?? 0,
       bathrooms: (json['bathrooms'] as num?)?.toInt() ?? 0,
@@ -60,5 +69,13 @@ class Property {
       images: List<String>.from(json['images'] ?? const []),
       isFavorite: json['isFavorite'] ?? false,
     );
+  }
+
+  bool get isUnavailable => ['archivé', 'loué', 'vendu'].contains(status.toLowerCase());
+
+  List<String> get galleryImages {
+    if (images.isNotEmpty) return images;
+    if (imageUrl.isNotEmpty) return [imageUrl];
+    return const [];
   }
 }

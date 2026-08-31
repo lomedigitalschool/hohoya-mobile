@@ -1,9 +1,14 @@
+import 'package:dio/dio.dart';
+
+import '../core/api_client.dart';
+import '../core/api_config.dart';
 import '../models/property.dart';
 import '../models/user_profile.dart';
 import '../screens/register_screen.dart' show UserRole;
 
 class PropertyService {
   static const pageSize = 4;
+  final _dio = ApiClient.instance.dio;
 
   static final List<Property> _properties = [
     Property(
@@ -120,6 +125,40 @@ class PropertyService {
   ];
 
   static const _ownerPropertyIds = {'1', '5', '8'};
+  static final Set<String> _favoriteIds = {};
+
+  Future<List<Property>> fetchFavorites() async {
+    if (ApiConfig.useLocalAuth) {
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      return _properties.where((p) => _favoriteIds.contains(p.id)).toList();
+    }
+
+    try {
+      final response = await _dio.get('/users/me/favorites');
+      final list = response.data as List;
+      return list.map((item) => Property.fromJson(item as Map<String, dynamic>)).toList();
+    } on DioException catch (error) {
+      throw StateError(_extractErrorMessage(error, fallback: 'Impossible de charger les favoris'));
+    }
+  }
+
+  Future<Property> fetchPropertyById(String propertyId) async {
+    if (ApiConfig.useLocalAuth) {
+      await Future<void>.delayed(const Duration(milliseconds: 250));
+      final property = _properties.firstWhere(
+        (item) => item.id == propertyId,
+        orElse: () => _properties.first,
+      );
+      return property;
+    }
+
+    try {
+      final response = await _dio.get('/properties/$propertyId');
+      return Property.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (error) {
+      throw StateError(_extractErrorMessage(error, fallback: 'Impossible de charger ce bien'));
+    }
+  }
 
   Future<List<Property>> fetchProperties({
     String search = '',
@@ -149,9 +188,29 @@ class PropertyService {
     return filtered.sublist(start, end);
   }
 
-  Future<void> addFavorite(String propertyId) async {}
+  Future<void> addFavorite(String propertyId) async {
+    if (ApiConfig.useLocalAuth) {
+      _favoriteIds.add(propertyId);
+      return;
+    }
+    try {
+      await _dio.post('/users/me/favorites/$propertyId');
+    } on DioException catch (error) {
+      throw StateError(_extractErrorMessage(error, fallback: 'Impossible d\'ajouter aux favoris'));
+    }
+  }
 
-  Future<void> removeFavorite(String propertyId) async {}
+  Future<void> removeFavorite(String propertyId) async {
+    if (ApiConfig.useLocalAuth) {
+      _favoriteIds.remove(propertyId);
+      return;
+    }
+    try {
+      await _dio.delete('/users/me/favorites/$propertyId');
+    } on DioException catch (error) {
+      throw StateError(_extractErrorMessage(error, fallback: 'Impossible de retirer des favoris'));
+    }
+  }
 
   Future<List<Property>> fetchOwnerProperties() async {
     await Future<void>.delayed(const Duration(milliseconds: 350));
@@ -200,8 +259,26 @@ class PropertyService {
   Future<void> uploadPropertyImages(String propertyId, List<String> images) async {}
 
   Future<UserProfile> fetchUser(String userId) async {
-    await Future<void>.delayed(const Duration(milliseconds: 350));
-    final properties = _properties.where((property) => property.ownerId == userId && property.status != 'archivé').toList();
-    return UserProfile(id: userId, name: 'Agence Hohaya', role: UserRole.proprietaire, properties: properties);
+    if (ApiConfig.useLocalAuth) {
+      await Future<void>.delayed(const Duration(milliseconds: 350));
+      final properties = _properties.where((property) => property.ownerId == userId && property.status != 'archivé').toList();
+      return UserProfile(id: userId, name: 'Agence Hohaya', role: UserRole.proprietaire, properties: properties);
+    }
+
+    try {
+      final response = await _dio.get('/users/$userId');
+      return UserProfile.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (error) {
+      throw StateError(_extractErrorMessage(error, fallback: 'Impossible de charger ce profil'));
+    }
+  }
+
+  static String _extractErrorMessage(DioException error, {required String fallback}) {
+    final data = error.response?.data;
+    if (data is Map && data['message'] is String) return data['message'] as String;
+    if (error.type == DioExceptionType.connectionError || error.type == DioExceptionType.connectionTimeout) {
+      return 'Impossible de contacter le serveur';
+    }
+    return fallback;
   }
 }

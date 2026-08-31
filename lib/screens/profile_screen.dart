@@ -9,6 +9,7 @@ import '../theme/app_colors.dart';
 import '../widgets/auth_text_field.dart';
 import '../widgets/primary_button.dart';
 import 'change_password_screen.dart';
+import 'my_visit_requests_screen.dart';
 import 'public_profile_screen.dart';
 import 'register_screen.dart' show UserRole;
 
@@ -226,6 +227,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         if (_isEditing)
                           PrimaryButton(label: 'Enregistrer', isLoading: _isSaving, onPressed: _handleSave),
                         if (!_isEditing) ...[
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: const Icon(Icons.calendar_month_outlined, color: AppColors.textPrimary),
+                            title: const Text('Mes demandes de visite'),
+                            trailing: const Icon(Icons.chevron_right),
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute(builder: (_) => const MyVisitRequestsScreen()),
+                            ),
+                          ),
                           ListTile(
                             contentPadding: EdgeInsets.zero,
                             leading: const Icon(Icons.lock_outline, color: AppColors.textPrimary),
