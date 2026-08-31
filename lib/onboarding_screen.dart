@@ -39,9 +39,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         curve: Curves.easeOutCubic,
       );
     } else {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-      );
+      // Redirection vers la route déclarée dans main.dart (ex: '/login' ou '/home')
+      Navigator.of(context).pushReplacementNamed('/login');
     }
   }
 
@@ -85,7 +84,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 borderRadius: BorderRadius.circular(24),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.12),
+                                    color: Colors.black.withValues(alpha: 0.12),
                                     blurRadius: 24,
                                     offset: const Offset(0, 12),
                                   ),
@@ -186,23 +185,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Hohaya'),
-        centerTitle: true,
-      ),
-      body: const Center(
-        child: Text('Bienvenue sur Hohaya'),
       ),
     );
   }

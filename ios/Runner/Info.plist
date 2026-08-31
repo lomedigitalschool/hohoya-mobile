@@ -24,6 +24,10 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Hohaya a besoin d'accéder à l'appareil photo pour changer votre photo de profil.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Hohaya a besoin d'accéder à vos photos pour changer votre photo de profil.</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>

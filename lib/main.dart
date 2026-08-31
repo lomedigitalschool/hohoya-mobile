@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
-import 'onboarding_screen.dart';
 
 import 'onboarding_screen.dart';
+import 'screens/favorites_screen.dart';
+import 'screens/home_screen.dart';
+import 'screens/login_screen.dart';
+import 'screens/my_visit_requests_screen.dart';
+import 'screens/owner_properties_screen.dart';
+import 'screens/profile_screen.dart';
+import 'screens/register_screen.dart';
 import 'theme/app_theme.dart';
 
 void main() {
@@ -17,7 +23,17 @@ class HohayaApp extends StatelessWidget {
       title: 'Hohaya',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      home: const OnboardingScreen(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const OnboardingScreen(),
+        '/login': (context) => const LoginScreen(),
+        '/register': (context) => const RegisterScreen(),
+        '/home': (context) => const HomeScreen(),
+        '/owner-properties': (context) => const OwnerPropertiesScreen(),
+        '/profile': (context) => const ProfileScreen(),
+        '/my-visit-requests': (context) => const MyVisitRequestsScreen(),
+        '/favorites': (context) => const FavoritesScreen(),
+      },
     );
   }
 }
