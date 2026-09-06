@@ -130,13 +130,23 @@ class PropertyService {
   Future<List<Property>> fetchFavorites() async {
     if (ApiConfig.useLocalAuth) {
       await Future<void>.delayed(const Duration(milliseconds: 300));
-      return _properties.where((p) => _favoriteIds.contains(p.id)).toList();
+      final favorites = _properties.where((p) => _favoriteIds.contains(p.id)).toList();
+      // Synchronise l'état favori avec le service
+      for (final property in favorites) {
+        property.isFavorite = true;
+      }
+      return favorites;
     }
 
     try {
       final response = await _dio.get('/users/me/favorites');
       final list = response.data as List;
-      return list.map((item) => Property.fromJson(item as Map<String, dynamic>)).toList();
+      final properties = list.map((item) => Property.fromJson(item as Map<String, dynamic>)).toList();
+      // Synchronise l'état favori avec le service
+      for (final property in properties) {
+        property.isFavorite = true;
+      }
+      return properties;
     } on DioException catch (error) {
       throw StateError(_extractErrorMessage(error, fallback: 'Impossible de charger les favoris'));
     }
@@ -149,12 +159,17 @@ class PropertyService {
         (item) => item.id == propertyId,
         orElse: () => _properties.first,
       );
+      // Synchronise l'état favori avec le service
+      property.isFavorite = _favoriteIds.contains(property.id);
       return property;
     }
 
     try {
       final response = await _dio.get('/properties/$propertyId');
-      return Property.fromJson(response.data as Map<String, dynamic>);
+      final property = Property.fromJson(response.data as Map<String, dynamic>);
+      // Synchronise l'état favori avec le service
+      property.isFavorite = _favoriteIds.contains(property.id);
+      return property;
     } on DioException catch (error) {
       throw StateError(_extractErrorMessage(error, fallback: 'Impossible de charger ce bien'));
     }
@@ -185,7 +200,12 @@ class PropertyService {
     final start = (page - 1) * pageSize;
     if (start >= filtered.length) return [];
     final end = (start + pageSize).clamp(0, filtered.length);
-    return filtered.sublist(start, end);
+    final results = filtered.sublist(start, end);
+    // Synchronise l'état favori avec le service
+    for (final property in results) {
+      property.isFavorite = _favoriteIds.contains(property.id);
+    }
+    return results;
   }
 
   Future<void> addFavorite(String propertyId) async {
@@ -214,7 +234,12 @@ class PropertyService {
 
   Future<List<Property>> fetchOwnerProperties() async {
     await Future<void>.delayed(const Duration(milliseconds: 350));
-    return _properties.where((property) => _ownerPropertyIds.contains(property.id)).toList();
+    final properties = _properties.where((property) => _ownerPropertyIds.contains(property.id)).toList();
+    // Synchronise l'état favori avec le service
+    for (final property in properties) {
+      property.isFavorite = _favoriteIds.contains(property.id);
+    }
+    return properties;
   }
 
   Future<Property> createProperty({required String title, required String city, required String neighborhood, required String address, required String type, required double price, required String priceType, required double deposit, required int bedrooms, required int bathrooms, required int area, required String description, List<String> images = const []}) async {

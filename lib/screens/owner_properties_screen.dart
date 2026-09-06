@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import '../models/property.dart';
 import '../services/property_service.dart';
 import 'create_property_screen.dart';
+import 'owner_revenue_screen.dart';
+import 'owner_visit_requests_screen.dart';
 import 'property_detail_screen.dart';
+import 'visit_stats_screen.dart';
 
 class OwnerPropertiesScreen extends StatefulWidget {
   const OwnerPropertiesScreen({super.key});
@@ -67,7 +70,32 @@ class _OwnerPropertiesScreenState extends State<OwnerPropertiesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Mon portefeuille')),
+      appBar: AppBar(
+        title: const Text('Mon portefeuille'),
+        actions: [
+          IconButton(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const OwnerVisitRequestsScreen()),
+            ),
+            icon: const Icon(Icons.calendar_month_outlined),
+            tooltip: 'Demandes de visite reçues',
+          ),
+          IconButton(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const VisitStatsScreen()),
+            ),
+            icon: const Icon(Icons.bar_chart_outlined),
+            tooltip: 'Statistiques des visites',
+          ),
+          IconButton(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const OwnerRevenueScreen()),
+            ),
+            icon: const Icon(Icons.savings_outlined),
+            tooltip: 'Mes revenus',
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(onPressed: _createProperty, tooltip: 'Créer une annonce', child: const Icon(Icons.add)),
       body: FutureBuilder<List<Property>>(
         future: _propertiesFuture,

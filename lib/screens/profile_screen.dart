@@ -10,6 +10,8 @@ import '../widgets/auth_text_field.dart';
 import '../widgets/primary_button.dart';
 import 'change_password_screen.dart';
 import 'my_visit_requests_screen.dart';
+import 'new_payment_screen.dart';
+import 'payment_history_screen.dart';
 import 'public_profile_screen.dart';
 import 'register_screen.dart' show UserRole;
 
@@ -234,6 +236,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             trailing: const Icon(Icons.chevron_right),
                             onTap: () => Navigator.of(context).push(
                               MaterialPageRoute(builder: (_) => const MyVisitRequestsScreen()),
+                            ),
+                          ),
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: const Icon(Icons.payment_outlined, color: AppColors.textPrimary),
+                            title: const Text('Effectuer un paiement'),
+                            trailing: const Icon(Icons.chevron_right),
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute(builder: (_) => const NewPaymentScreen()),
+                            ),
+                          ),
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: const Icon(Icons.receipt_long_outlined, color: AppColors.textPrimary),
+                            title: const Text('Mes paiements'),
+                            trailing: const Icon(Icons.chevron_right),
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute(builder: (_) => const PaymentHistoryScreen()),
                             ),
                           ),
                           ListTile(

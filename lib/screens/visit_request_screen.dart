@@ -1,214 +1,203 @@
 import 'package:flutter/material.dart';
 
 import '../models/property.dart';
-import '../services/auth_service.dart';
 import '../services/visit_request_service.dart';
+import '../utils/date_format.dart';
 
-class VisitRequestScreen extends StatefulWidget {
+const _timeSlots = [
+  '08:00', '09:00', '10:00', '11:00', '12:00',
+  '14:00', '15:00', '16:00', '17:00', '18:00',
+];
+
+class VisitRequestSheet extends StatefulWidget {
   final Property property;
 
-  const VisitRequestScreen({super.key, required this.property});
+  const VisitRequestSheet({super.key, required this.property});
+
+  static Future<DateTime?> show(BuildContext context, Property property) {
+    return showModalBottomSheet<DateTime>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => VisitRequestSheet(property: property),
+    );
+  }
 
   @override
-  State<VisitRequestScreen> createState() => _VisitRequestScreenState();
+  State<VisitRequestSheet> createState() => _VisitRequestSheetState();
 }
 
-class _VisitRequestScreenState extends State<VisitRequestScreen> {
-  final _dateController = TextEditingController();
+class _VisitRequestSheetState extends State<VisitRequestSheet> {
   final _messageController = TextEditingController();
-  final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _phoneController = TextEditingController();
-  bool _isLoading = true;
+  DateTime? _selectedDate;
+  String? _selectedSlot;
   bool _isSubmitting = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadUserData();
-  }
-
-  Future<void> _loadUserData() async {
-    try {
-      final user = await AuthService.instance.getCurrentUser();
-      if (mounted) {
-        setState(() {
-          _nameController.text = user.name;
-          _emailController.text = user.email;
-          _phoneController.text = user.phone ?? '';
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
+  String? _errorMessage;
 
   @override
   void dispose() {
-    _dateController.dispose();
     _messageController.dispose();
-    _nameController.dispose();
-    _emailController.dispose();
-    _phoneController.dispose();
     super.dispose();
   }
 
-  Future<void> _submitRequest() async {
-    final date = _dateController.text.trim();
-    final message = _messageController.text.trim();
-    final name = _nameController.text.trim();
-    final email = _emailController.text.trim();
-    final phone = _phoneController.text.trim();
+  Future<void> _pickDate() async {
+    final now = DateTime.now();
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? now.add(const Duration(days: 1)),
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 180)),
+    );
+    if (date != null) {
+      setState(() {
+        _selectedDate = date;
+        _errorMessage = null;
+      });
+    }
+  }
 
-    if (date.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Veuillez choisir une date pour la visite.')),
-      );
+  DateTime? get _scheduledAt {
+    if (_selectedDate == null || _selectedSlot == null) return null;
+    final parts = _selectedSlot!.split(':');
+    return DateTime(
+      _selectedDate!.year,
+      _selectedDate!.month,
+      _selectedDate!.day,
+      int.parse(parts[0]),
+      int.parse(parts[1]),
+    );
+  }
+
+  Future<void> _submit() async {
+    final scheduledAt = _scheduledAt;
+    if (scheduledAt == null) {
+      setState(() => _errorMessage = 'Veuillez choisir une date et un créneau horaire.');
       return;
     }
 
-    if (name.isEmpty || email.isEmpty || phone.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Veuillez remplir tous les champs.')),
-      );
-      return;
-    }
-
-    setState(() => _isSubmitting = true);
+    setState(() {
+      _isSubmitting = true;
+      _errorMessage = null;
+    });
 
     try {
-      await VisitRequestService().submitVisitRequest(
-        propertyId: widget.property.id,
-        propertyTitle: widget.property.title,
-        visitorName: name,
-        visitorEmail: email,
-        visitorPhone: phone,
-        requestedDate: date,
-        message: message,
+      await VisitRequestService().requestVisit(
+        property: widget.property,
+        scheduledAt: scheduledAt,
+        message: _messageController.text.trim().isEmpty ? null : _messageController.text.trim(),
       );
-
       if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Demande de visite envoyée avec succès !'),
-          backgroundColor: Colors.teal,
-        ),
-      );
-
-      Navigator.pop(context);
-    } catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erreur : ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      Navigator.pop(context, scheduledAt);
+    } on VisitRequestFailure catch (error) {
+      setState(() => _errorMessage = error.message);
+    } catch (_) {
+      setState(() => _errorMessage = "Impossible d'envoyer la demande de visite. Réessayez.");
     } finally {
-      if (mounted) {
-        setState(() => _isSubmitting = false);
-      }
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('Planifier une visite'),
-          backgroundColor: Colors.teal,
-        ),
-        body: const Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Planifier une visite'),
-        backgroundColor: Colors.teal,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+            ),
+            const Text(
+              'Planifier une visite',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
             Text(
               widget.property.title,
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '${widget.property.city} • ${widget.property.neighborhood.isNotEmpty ? widget.property.neighborhood : widget.property.address}',
               style: const TextStyle(color: Colors.grey),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 24),
-            const Text(
-              'Vos informations',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Nom complet',
-                border: OutlineInputBorder(),
+            const SizedBox(height: 20),
+            const Text('Date', style: TextStyle(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
+            InkWell(
+              onTap: _pickDate,
+              borderRadius: BorderRadius.circular(12),
+              child: InputDecorator(
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.calendar_today_outlined),
+                ),
+                child: Text(
+                  _selectedDate == null
+                      ? 'Choisir une date'
+                      : '${_selectedDate!.day} ${monthNames[_selectedDate!.month - 1]} ${_selectedDate!.year}',
+                  style: TextStyle(color: _selectedDate == null ? Colors.grey.shade600 : null),
+                ),
               ),
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _emailController,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                border: OutlineInputBorder(),
-              ),
+            const SizedBox(height: 20),
+            const Text('Créneau horaire', style: TextStyle(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _timeSlots.map((slot) {
+                final selected = _selectedSlot == slot;
+                return ChoiceChip(
+                  label: Text(slot),
+                  selected: selected,
+                  onSelected: (_) => setState(() {
+                    _selectedSlot = slot;
+                    _errorMessage = null;
+                  }),
+                );
+              }).toList(),
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _phoneController,
-              decoration: const InputDecoration(
-                labelText: 'Téléphone',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'Détails de la visite',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _dateController,
-              decoration: const InputDecoration(
-                labelText: 'Date souhaitée',
-                hintText: 'Ex. 15 septembre 2026',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.calendar_today_outlined),
-              ),
-            ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 20),
+            const Text('Message (optionnel)', style: TextStyle(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
             TextField(
               controller: _messageController,
-              minLines: 4,
-              maxLines: 6,
+              minLines: 3,
+              maxLines: 5,
               decoration: const InputDecoration(
-                labelText: 'Message',
-                hintText: 'Décrivez votre demande ou votre disponibilité',
+                hintText: 'Précisez une info utile pour le propriétaire',
                 border: OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 28),
+            if (_errorMessage != null) ...[
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
+              ),
+            ],
+            const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
-                onPressed: _isSubmitting ? null : _submitRequest,
+                onPressed: _isSubmitting ? null : _submit,
                 icon: _isSubmitting
                     ? const SizedBox(
                         width: 20,
@@ -219,7 +208,7 @@ class _VisitRequestScreenState extends State<VisitRequestScreen> {
                         ),
                       )
                     : const Icon(Icons.send_outlined),
-                label: Text(_isSubmitting ? 'Envoi en cours...' : 'Envoyer la demande'),
+                label: Text(_isSubmitting ? 'Envoi en cours...' : 'Envoyer'),
               ),
             ),
           ],

@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hohaya/main.dart';
 import 'package:hohaya/models/property.dart';
 import 'package:hohaya/screens/property_detail_screen.dart';
-import 'package:hohaya/screens/visit_request_screen.dart';
 
 void main() {
   testWidgets('displays onboarding content and next action', (tester) async {

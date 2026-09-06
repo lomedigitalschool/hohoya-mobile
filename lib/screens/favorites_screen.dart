@@ -16,11 +16,26 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   late Future<List<Property>> _favorites;
   List<Property> _displayedFavorites = [];
   final _service = PropertyService();
+  ScaffoldMessengerState? _messenger;
 
   @override
   void initState() {
     super.initState();
     _loadFavorites();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _messenger = ScaffoldMessenger.of(context);
+  }
+
+  @override
+  void dispose() {
+    // Avoid an "Annuler" SnackBar from this screen bleeding into whatever
+    // screen is revealed once this one is popped.
+    _messenger?.clearSnackBars();
+    super.dispose();
   }
 
   void _loadFavorites() {
@@ -36,6 +51,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
     try {
       await _service.removeFavorite(property.id);
+      property.isFavorite = false;
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -45,6 +61,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
             onPressed: () async {
               try {
                 await _service.addFavorite(property.id);
+                property.isFavorite = true;
                 if (!mounted) return;
                 setState(() => _displayedFavorites.insert(index, property));
               } catch (e) {
@@ -146,11 +163,18 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                 ),
                 onDismissed: (_) => _removeFavorite(property),
                 child: GestureDetector(
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => PropertyDetailScreen(property: property),
-                    ),
-                  ),
+                  onTap: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => PropertyDetailScreen(property: property),
+                      ),
+                    );
+                    // The heart on the detail screen may have unfavorited this
+                    // property (same shared instance); drop it from this list.
+                    if (mounted && !property.isFavorite) {
+                      setState(() => _displayedFavorites.removeWhere((p) => p.id == property.id));
+                    }
+                  },
                   child: PropertyCard(
                     property: property,
                     onTap: () {},

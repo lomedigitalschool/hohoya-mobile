@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/property.dart';
 import '../services/property_service.dart';
+import '../utils/favorite_toggle.dart' as favorites;
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/property_card.dart';
 import '../widgets/search_bar.dart';
@@ -186,20 +187,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   int get _activeFilterCount => [_filterCity, _filterNeighborhood, _type == 'Tous' ? '' : _type, _minPrice == null ? '' : 'min', _maxPrice == null ? '' : 'max'].where((value) => value.isNotEmpty).length;
 
-  Future<void> _toggleFavorite(Property property) async {
-    setState(() => property.isFavorite = !property.isFavorite);
-    try {
-      if (property.isFavorite) {
-        await _service.addFavorite(property.id);
-      } else {
-        await _service.removeFavorite(property.id);
-      }
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => property.isFavorite = !property.isFavorite);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Impossible de modifier le favori')));
-    }
-  }
+  Future<void> _toggleFavorite(Property property) =>
+      favorites.toggleFavorite(context, property, onChanged: () => setState(() {}));
 
   void _changeCity() {
     const cities = ['Lome', 'Kara', 'Aneho', 'Sokode'];
@@ -215,7 +204,12 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _openProperty(Property property) => Navigator.of(context).push(MaterialPageRoute(builder: (_) => PropertyDetailScreen(property: property)));
+  Future<void> _openProperty(Property property) async {
+    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => PropertyDetailScreen(property: property)));
+    // `property` is the same instance held in `_properties`, so favorite/status
+    // changes made on the detail screen are already reflected; just repaint.
+    if (mounted) setState(() {});
+  }
 
   PropertyCard _card(Property property) => PropertyCard(property: property, onTap: () => _openProperty(property), onFavoriteTap: () => _toggleFavorite(property));
 
@@ -253,7 +247,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ]),
       ),
-      bottomNavigationBar: const AppBottomNavBar(),
+      bottomNavigationBar: AppBottomNavBar(onReturn: () => setState(() {})),
     );
   }
 }

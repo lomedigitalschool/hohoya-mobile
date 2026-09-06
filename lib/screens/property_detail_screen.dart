@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../models/payment_transaction.dart';
 import '../models/property.dart';
 import '../services/property_service.dart';
+import '../utils/date_format.dart';
+import '../utils/favorite_toggle.dart' as favorites;
+import 'payment_screen.dart';
 import 'public_profile_screen.dart';
 import 'visit_request_screen.dart';
 
@@ -42,15 +46,56 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
 
   bool get _isUnavailable => _property.isUnavailable;
 
-  void _toggleFavorite() {
-    setState(() => _property.isFavorite = !_property.isFavorite);
-  }
+  Future<void> _toggleFavorite() =>
+      favorites.toggleFavorite(context, _property, onChanged: () => setState(() {}));
 
   Future<void> _requestVisit() async {
     if (_isUnavailable) return;
+    final scheduledAt = await VisitRequestSheet.show(context, _property);
+    if (scheduledAt == null || !mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Visite demandée pour le ${formatVisitDateTime(scheduledAt)}. Vous recevrez une confirmation du propriétaire.'),
+        backgroundColor: Colors.teal,
+      ),
+    );
+  }
+
+  Future<void> _openPaymentSheet() async {
+    final type = await showModalBottomSheet<TransactionType>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.home_outlined),
+              title: const Text('Payer le loyer'),
+              subtitle: Text('${_property.price.toStringAsFixed(0)} FCFA'),
+              onTap: () => Navigator.pop(context, TransactionType.rent),
+            ),
+            if (_property.deposit > 0)
+              ListTile(
+                leading: const Icon(Icons.savings_outlined),
+                title: const Text('Payer la caution'),
+                subtitle: Text('${_property.deposit.toStringAsFixed(0)} FCFA'),
+                onTap: () => Navigator.pop(context, TransactionType.deposit),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (type == null || !mounted) return;
+
+    final amount = type == TransactionType.rent ? _property.price : _property.deposit;
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => VisitRequestScreen(property: _property),
+        builder: (_) => PaymentScreen(
+          type: type,
+          amount: amount,
+          propertyId: _property.id,
+          contextLabel: _property.title,
+        ),
       ),
     );
   }
@@ -86,6 +131,8 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
                 icon: Icon(_property.isFavorite ? Icons.favorite : Icons.favorite_border),
                 tooltip: _property.isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris',
               ),
+              if (!widget.isOwner && !_isUnavailable)
+                IconButton(onPressed: _openPaymentSheet, icon: const Icon(Icons.payment_outlined), tooltip: 'Payer'),
               if (widget.isOwner)
                 IconButton(onPressed: () => _openStatusSheet(context), icon: const Icon(Icons.more_vert), tooltip: 'Changer le statut'),
             ],
